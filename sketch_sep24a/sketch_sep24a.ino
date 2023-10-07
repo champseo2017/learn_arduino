@@ -1,38 +1,32 @@
-// ประกาศตัวแปรชื่อ 'Echo' ที่มีชนิดข้อมูลเป็น 'byte'
-// 'Echo' เป็นชื่อของตัวแปรที่สามารถถูกใช้เก็บข้อมูลแบบ byte (0-255)
-byte Echo;
+// ประกาศตัวแปร lastHighTime และ lastLowTime เพื่อเก็บเวลาล่าสุดที่ไฟเป็นสถานะ HIGH และ LOW
+unsigned long lastHighTime = 0;
+unsigned long lastLowTime = 0;
 
-// ฟังก์ชัน setup() จะถูกเรียกเมื่อโปรแกรมเริ่มทำงาน
-void setup()
-{
-  // ตั้งค่าขา 13 เป็น OUTPUT (เอาท์พุต)
-  pinMode(13, OUTPUT);
-
-  // ตั้งสถานะขา 13 เป็น LOW (ปิดไฟ)
-  digitalWrite(13, LOW);
-
-  // เริ่มการสื่อสารผ่าน Serial port ที่ความเร็ว 9600 bits per second
-  Serial.begin(9600);
+// ฟังก์ชัน setup จะทำงานครั้งเดียวเมื่อเริ่มต้นโปรแกรม
+void setup() {
+  pinMode(9, OUTPUT); // ตั้งขา 9 ให้เป็น OUTPUT
+  digitalWrite(9, LOW); // ตั้งขา 9 ให้เป็น LOW หรือปิดไฟ
+  Serial.begin(9600); // เริ่มต้น Serial ที่ความเร็ว 9600 bps
 }
 
-// ฟังก์ชัน loop() จะถูกเรียกซ้ำๆ เมื่อ setup() เสร็จสิ้น
-void loop()
-{
-  // ตั้งสถานะขา 13 เป็น HIGH (เปิดไฟ)
-  digitalWrite(13, HIGH);
+// ฟังก์ชัน loop จะทำงานซ้ำ ๆ ตลอดเวลา
+void loop() {
+  unsigned long currentTime = millis(); // รับเวลาปัจจุบันในหน่วยมิลลิวินาที
 
-  // ส่งข้อความ "Status: Light" ไปยัง Serial port
-  Serial.println("Status: Light");
-
-  // หน่วงเวลา 3000 มิลลิวินาที (3 วินาที)
-  delay(3000);
-
-  // ตั้งสถานะขา 13 เป็น LOW (ปิดไฟ)
-  digitalWrite(13, LOW);
-
-  // ส่งข้อความ "Status: Dark" ไปยัง Serial port
-  Serial.println("Status: Dark");
-
-  // หน่วงเวลา 1000 มิลลิวินาที (1 วินาที)
-  delay(1000);
+  // ตรวจสอบสถานะปัจจุบันของขา 9 ว่าเป็น HIGH หรือไม่
+  if (digitalRead(9) == HIGH) {
+    // ถ้าเวลาปัจจุบัน - เวลาที่ไฟเป็นสถานะ HIGH ล่าสุด >= 3000 มิลลิวินาที
+    if (currentTime - lastHighTime >= 3000) {
+      digitalWrite(9, LOW); // ตั้งขา 9 ให้เป็น LOW หรือปิดไฟ
+      Serial.println("Status: Dark"); // แสดงข้อความ "Status: Dark" ใน Serial Monitor
+      lastLowTime = currentTime; // อัปเดตเวลาที่ไฟเป็นสถานะ LOW ล่าสุด
+    }
+  } else {
+    // ถ้าเวลาปัจจุบัน - เวลาที่ไฟเป็นสถานะ LOW ล่าสุด >= 1000 มิลลิวินาที
+    if (currentTime - lastLowTime >= 1000) {
+      digitalWrite(9, HIGH); // ตั้งขา 9 ให้เป็น HIGH หรือเปิดไฟ
+      Serial.println("Status: Light"); // แสดงข้อความ "Status: Light" ใน Serial Monitor
+      lastHighTime = currentTime; // อัปเดตเวลาที่ไฟเป็นสถานะ HIGH ล่าสุด
+    }
+  }
 }
